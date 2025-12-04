@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
 
 func parse() [][]int {
@@ -35,31 +36,25 @@ func parse() [][]int {
 
 func part1(banks [][]int) {
 	ans := 0
-	for i := 0; i < len(banks); i++ {
-		bank := banks[i]
-		joltage := bank[0:2]
-
-		for j := 0; j < len(bank[2:]); j++ {
-			next := bank[j+2]
-			lt := joltage[0]
-			rt := joltage[1]
+	for _, bank := range banks {
+		lt := bank[0]
+		rt := bank[1]
+		for _, next := range bank[2:] {
 			if lt < rt {
-				joltage[0] = joltage[1]
-				joltage[1] = next
+				lt = rt
+				rt = next
 			} else {
 				if rt < next {
-					joltage[1] = next
+					rt = next
 				}
 			}
 		}
-		fmt.Println("part1:", joltage)
-		ans += (joltage[0] * 10) + joltage[1]
+		ans += (lt * 10) + rt
 	}
 	fmt.Println(ans)
 }
 
 func logic2(arr []int, k int) []int {
-	fmt.Println("arr:", arr)
 	n := len(arr)
 	drop := n - k
 
@@ -72,26 +67,23 @@ func logic2(arr []int, k int) []int {
 		}
 		stack = append(stack, digit)
 	}
-	fmt.Println("stack:", stack)
 	return stack[:k]
+}
+
+func digitsToInt(digits []int) int {
+	var sb strings.Builder
+	for _, d := range digits {
+		sb.WriteByte(byte(d) + '0')
+	}
+	n, _ := strconv.Atoi(sb.String())
+	return n
 }
 
 func part2(banks [][]int, k int) {
 	ans := 0
-	for i := 0; i < len(banks); i++ {
-		bank := banks[i]
+	for _, bank := range banks {
 		joltage := logic2(bank, k)
-		fmt.Println("part2:", joltage)
-
-		temp_str := ""
-
-		for _, digit := range joltage {
-			temp_str += strconv.Itoa(digit)
-		}
-
-		real_joltage, _ := strconv.Atoi(temp_str)
-
-		ans += real_joltage
+		ans += digitsToInt(joltage)
 	}
 	fmt.Println(ans)
 }
@@ -101,7 +93,7 @@ func main() {
 
 	part1(banks)
 	// part1
-	// part2(banks, 2)
+	part2(banks, 2)
 	part2(banks, 12)
 
 	// i've got some problem of mutable code in part1. It affects banks that will be caculated in part2.
