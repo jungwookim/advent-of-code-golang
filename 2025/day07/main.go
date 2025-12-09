@@ -2,14 +2,15 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 )
 
-func parse() [][]byte {
+func parse() ([][]byte, error) {
 	file, err := os.Open("input.txt")
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer file.Close()
 
@@ -25,11 +26,14 @@ func parse() [][]byte {
 
 		grid = append(grid, []byte(line))
 	}
-	return grid
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	return grid, nil
 }
 
 func part1() int {
-	grid := parse()
+	grid, _ := parse()
 	ans := 0
 
 	row_size := len(grid)
@@ -54,9 +58,7 @@ func part1() int {
 	return ans
 }
 
-var memo map[[2]int]int
-
-func countTimelines(grid [][]byte, x int, y int) int {
+func countTimelines(grid [][]byte, x int, y int, memo map[[2]int]int) int {
 	// 좌우 경계를 벗어나면 유효하지 않은 경로
 	if y < 0 || y >= len(grid[0]) {
 		return 0
@@ -75,9 +77,9 @@ func countTimelines(grid [][]byte, x int, y int) int {
 	var result int
 	switch grid[x][y] {
 	case 'S', '.':
-		result = countTimelines(grid, x+1, y)
+		result = countTimelines(grid, x+1, y, memo)
 	case '^':
-		result = countTimelines(grid, x+1, y-1) + countTimelines(grid, x+1, y+1)
+		result = countTimelines(grid, x+1, y-1, memo) + countTimelines(grid, x+1, y+1, memo)
 	default:
 		result = 0
 	}
@@ -86,21 +88,30 @@ func countTimelines(grid [][]byte, x int, y int) int {
 	return result
 }
 
-func findStart(grid [][]byte) (int, int) {
+func findStart(grid [][]byte) (int, int, error) {
 	for y, v := range grid[0] {
 		if v == 'S' {
-			return 0, y
+			return 0, y, nil
 		}
 	}
-	return 0, 0
+	return 0, 0, errors.New("start position 'S' not found")
 }
 
 func part2() int {
-	grid := parse()
+	grid, err := parse()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error parsing input: %v\n", err)
+		return -1
+	}
 
-	memo = make(map[[2]int]int) // 메모 초기화
-	x, y := findStart(grid)
-	ans := countTimelines(grid, x, y)
+	x, y, err := findStart(grid)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return -1
+	}
+	memo := make(map[[2]int]int) // 메모 초기화
+
+	ans := countTimelines(grid, x, y, memo)
 
 	fmt.Println("Answer:", ans)
 	return ans
@@ -114,3 +125,7 @@ func main() {
 // What I learned:
 // DFS
 // memoization
+// switch statement
+// handling error
+// these can be nil: pointer, slice, map, channel, function, interface
+// these cannot be nil: int, float, bool, string, struct, array
