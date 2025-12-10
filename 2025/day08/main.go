@@ -155,9 +155,54 @@ func part1() {
 	}
 	fmt.Println("Answer:", ans)
 	return
+}
 
+func oneLargeCircuit() bool {
+	circuitSize := make(map[Position]int)
+
+	for p, _ := range parent {
+		circuitSize[find(p)]++
+	}
+
+	// make(type, length, capacity)
+	sizes := make([]int, 0, len(circuitSize))
+	for _, size := range circuitSize {
+		sizes = append(sizes, size)
+	}
+
+	if len(sizes) == 1 {
+		return true
+	}
+	return false
+}
+
+func part2() {
+	positions, _ := parse()
+	for _, node := range positions {
+		parent[node] = node
+	}
+	edges := prepare(positions)
+
+	sort.Slice(edges, func(i, j int) bool {
+		return edges[i].d < edges[j].d
+	})
+
+	for _, edge := range edges {
+		p := edge.p
+		q := edge.q
+		if find(p) != find(q) {
+			union(p, q)
+		}
+		if oneLargeCircuit() {
+			fmt.Println("Answer:", p.x*q.x)
+			break
+		}
+	}
+
+	return
 }
 
 func main() {
-	part1() // sample input
+	part1()
+	part2() // sample input
 }
