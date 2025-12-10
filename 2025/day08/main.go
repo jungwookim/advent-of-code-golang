@@ -17,15 +17,10 @@ type Position struct {
 	z int
 }
 
-type MyData struct {
+type Edge struct {
 	p Position
 	q Position
 	d float64
-}
-
-type PositionCount struct {
-	p Position
-	c int
 }
 
 func parse() ([]Position, error) {
@@ -63,14 +58,14 @@ func parse() ([]Position, error) {
 	return data, nil
 }
 
-func prepare(data []Position) []MyData {
-	var result []MyData
+func prepare(data []Position) []Edge {
+	var result []Edge
 	for i := 0; i < len(data); i++ {
 		for j := i + 1; j < len(data); j++ {
 			p := data[i]
 			q := data[j]
 			d := distance(p, q)
-			result = append(result, MyData{p, q, d})
+			result = append(result, Edge{p, q, d})
 		}
 	}
 	return result
@@ -98,50 +93,55 @@ func union(p Position, q Position) {
 }
 
 func top3() (int, error) {
-	temp := make(map[Position]int)
+	circuitSize := make(map[Position]int)
 
 	for p, _ := range parent {
-		temp[find(p)]++
+		circuitSize[find(p)]++
 	}
 
-	var positionCount []PositionCount
-	for p, c := range temp {
-		positionCount = append(positionCount, PositionCount{p, c})
+	// make(type, length, capacity)
+	sizes := make([]int, 0, len(circuitSize))
+	for _, size := range circuitSize {
+		sizes = append(sizes, size)
 	}
 
-	sort.Slice(positionCount, func(i, j int) bool {
-		return positionCount[i].c > positionCount[j].c
-	})
+	// classic
+	// sort.Slice(sizes, func(i, j int) bool {
+	// 	return sizes[i] > sizes[j]
+	// })
 
-	if len(positionCount) < 3 {
+	// use Sort method
+	sort.Sort(sort.Reverse(sort.IntSlice(sizes)))
+
+	if len(sizes) < 3 {
 		return -1, errors.New("Invalid answer")
 	}
 
-	ans := 1
-	for _, pos := range positionCount[0:3] {
-		ans *= pos.c
-	}
-	return ans, nil
+	return sizes[0] * sizes[1] * sizes[2], nil
 }
 
-func part1(maxConnection int) {
-	parsed_data, _ := parse()
-	for _, node := range parsed_data {
+func part1() {
+	positions, _ := parse()
+	for _, node := range positions {
 		parent[node] = node
 	}
-	data := prepare(parsed_data)
+	edges := prepare(positions)
 
-	sort.Slice(data, func(i, j int) bool {
-		return data[i].d < data[j].d
+	sort.Slice(edges, func(i, j int) bool {
+		return edges[i].d < edges[j].d
 	})
 
+	maxConnection := 10
+	if len(positions) >= 100 {
+		maxConnection = 1000
+	}
 	cnt := 0
-	for _, each := range data {
+	for _, edge := range edges {
 		if cnt >= maxConnection {
 			break
 		}
-		p := each.p
-		q := each.q
+		p := edge.p
+		q := edge.q
 		if find(p) != find(q) {
 			union(p, q)
 		}
@@ -159,5 +159,5 @@ func part1(maxConnection int) {
 }
 
 func main() {
-	part1(10)
+	part1() // sample input
 }
