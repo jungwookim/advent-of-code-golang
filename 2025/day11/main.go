@@ -56,25 +56,43 @@ func process1(node string, visited map[string]bool, edges map[string][]string) i
 	return result
 }
 
-func process2(node string, visited map[string]bool, edges map[string][]string, depth int) int {
-	if node == "out" {
-		if visited["fft"] && visited["dac"] {
-			return 1
-		} else {
-			return 0
-		}
+// 메모이제이션: "노드,fft,dac" -> 경로 수
+var memo map[string]int
+
+func makeKey(node string, fftVisited, dacVisited bool) string {
+	return fmt.Sprintf("%s,%v,%v", node, fftVisited, dacVisited)
+}
+
+func process2(node string, fftVisited, dacVisited bool, edges map[string][]string) int {
+	// 현재 노드가 fft 또는 dac이면 플래그 업데이트
+	if node == "fft" {
+		fftVisited = true
+	}
+	if node == "dac" {
+		dacVisited = true
 	}
 
-	if visited[node] {
+	if node == "out" {
+		if fftVisited && dacVisited {
+			return 1
+		}
 		return 0
 	}
 
-	visited[node] = true
+	// 이미 계산한 상태라면 캐시된 값 반환
+	key := makeKey(node, fftVisited, dacVisited)
+	if val, ok := memo[key]; ok {
+		return val
+	}
+
 	result := 0
 	for _, next := range edges[node] {
-		result += process2(next, visited, edges, depth+1)
+		result += process2(next, fftVisited, dacVisited, edges)
 	}
-	visited[node] = false
+
+	// 결과 캐싱
+	memo[key] = result
+
 	return result
 }
 
@@ -87,8 +105,9 @@ func part1() {
 
 func part2() {
 	edges, _ := parse("input2.txt")
-	visited := map[string]bool{}
-	ans := process2("svr", visited, edges, 0)
+	// 메모이제이션 초기화
+	memo = make(map[string]int)
+	ans := process2("svr", false, false, edges)
 	fmt.Println("Answer Part2:", ans)
 }
 
