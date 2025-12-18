@@ -56,6 +56,28 @@ func process1(node string, visited map[string]bool, edges map[string][]string) i
 	return result
 }
 
+func process2(node string, visited map[string]bool, edges map[string][]string, depth int) int {
+	if node == "out" {
+		if visited["fft"] && visited["dac"] {
+			return 1
+		} else {
+			return 0
+		}
+	}
+
+	if visited[node] {
+		return 0
+	}
+
+	visited[node] = true
+	result := 0
+	for _, next := range edges[node] {
+		result += process2(next, visited, edges, depth+1)
+	}
+	visited[node] = false
+	return result
+}
+
 func part1() {
 	edges, _ := parse("input1.txt")
 	visited := map[string]bool{}
@@ -63,6 +85,14 @@ func part1() {
 	fmt.Println("Answer Part1:", ans)
 }
 
+func part2() {
+	edges, _ := parse("input2.txt")
+	visited := map[string]bool{}
+	ans := process2("svr", visited, edges, 0)
+	fmt.Println("Answer Part2:", ans)
+}
+
 func main() {
 	part1()
+	part2()
 }
